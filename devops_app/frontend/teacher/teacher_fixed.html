@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENT EST · Espace Enseignant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f9fafb; margin: 0; overflow-x: hidden; }
+        .content-area { margin-left: 256px; padding-top: 64px; min-height: 100vh; transition: all 0.3s ease; }
+        .nav-link.active { background-color: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
+        #user-dropdown { transition: all 0.2s ease; }
+
+        @keyframes fadeIn   { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp  { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown{ from { opacity: 0; transform: translateY(-25px); } to { opacity: 1; transform: translateY(0); } }
+
+        .animate-fade-in   { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slide-up  { opacity: 0; animation: slideUp 0.6s ease forwards; }
+        .animate-slide-down{ animation: slideDown 0.6s ease forwards; }
+
+        /* Chat scrollbar */
+        .chat-scroll::-webkit-scrollbar { width: 5px; }
+        .chat-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- TOP HEADER -->
+    <header class="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 z-20">
+        <div class="h-full px-8 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900" id="header-title">Accueil</h2>
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <img src="https://ui-avatars.com/api/?name=Thomas+Martin&background=0D9488&color=fff&size=40" class="w-8 h-8 rounded-full">
+                    <div class="text-left hidden md:block">
+                        <p class="text-sm font-medium text-gray-900">Thomas Martin</p>
+                        <p class="text-xs text-gray-500">Enseignant</p>
+                    </div>
+                </button>
+                <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg hidden z-50 overflow-hidden">
+                    <button class="w-full px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span>Mon Profil</span>
+                    </button>
+                    <div class="border-t border-gray-200"></div>
+                    <button onclick="logout()" class="w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        <span>Déconnexion</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col z-30">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                </div>
+                <div>
+                    <h1 class="font-semibold text-gray-900 leading-tight">ENT Université</h1>
+                    <p class="text-xs text-gray-500">Espace Enseignant</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 p-4">
+            <ul class="space-y-1" id="sidebar-nav">
+                <li><button onclick="router('accueil')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50" id="btn-accueil">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span class="font-medium">Accueil</span>
+                </button></li>
+                <li><button onclick="router('calendar')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50" id="btn-calendar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 4h10M4 12h16m-6 4l-6 6m6-6l6 6"/></svg>
+                    <span class="font-medium">Calendrier</span>
+                </button></li>
+                <li><button onclick="router('courses')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50" id="btn-courses">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <span class="font-medium">Mes Cours</span>
+                </button></li>
+                <li><button onclick="router('assignments')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50" id="btn-assignments">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span class="font-medium">Devoirs</span>
+                </button></li>
+                <li><button onclick="router('chatbot')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50" id="btn-chatbot">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <span class="font-medium">Assistant IA</span>
+                </button></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-gray-200 text-center text-xs text-gray-400">© 2026 ENT Université</div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="content-area">
+        <div id="main-content" class="p-8 animate-fade-in"></div>
+    </main>
+</div>
+
+<!-- ===================== PAGE TEMPLATES ===================== -->
+    <!-- Accueil -->
+
+<template id="page-accueil">
+<div class="max-w-7xl mx-auto space-y-8 animate-fade-in">
+    <div class="flex justify-between items-center animate-slide-down">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dashboard Enseignant</h1>
+            <p class="text-gray-600 mt-1">Bienvenue, Thomas. Voici un aperçu de votre activité.</p>
+        </div>
+        <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 text-gray-700 font-medium flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span class="current-date-span"></span>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-slide-up" style="animation-delay:100ms">
+            <div class="flex items-start justify-between mb-3">
+                <div class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                
+            </div>
+            <p class="text-sm text-gray-500 mb-1">Cours actifs</p>
+            <p class="text-3xl font-bold text-gray-900">6</p>
+        </div>
+        <div class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-slide-up" style="animation-delay:200ms">
+            <div class="flex items-start justify-between mb-3">
+                <div class="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mb-1">Étudiants</p>
+            <p class="text-3xl font-bold text-gray-900">114</p>
+           
+        </div>
+        <div class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-slide-up" style="animation-delay:300ms">
+            <div class="flex items-start justify-between mb-3">
+                <div class="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mb-1">Ressources</p>
+            <p class="text-3xl font-bold text-gray-900">46</p>
+        </div>
+    </div>
+</div>
+</template>
+
+    <!-- courses -->
+
+<template id="page-courses">
+<div class="max-w-7xl mx-auto space-y-8 animate-fade-in">
+    <div class="flex justify-between items-center animate-slide-down">
+        <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">Mes Cours</h1>
+        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">+ Ajouter un cours</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow animate-slide-up" style="animation-delay:100ms">
+            <div class="h-24 bg-gradient-to-br from-blue-600 to-blue-700 p-4 flex items-end">
+                <h3 class="text-white font-bold">Data Science Fondamentaux</h3>
+            </div>
+            <div class="p-4">
+                <p class="text-sm text-gray-600 mb-4">Concepts clés du machine learning avec Python.</p>
+                <div class="flex justify-between text-xs text-gray-400">
+                    <span>24 Étudiants</span><span>Modifié le 12/02</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow animate-slide-up" style="animation-delay:200ms">
+            <div class="h-24 bg-gradient-to-br from-purple-600 to-purple-700 p-4 flex items-end">
+                <h3 class="text-white font-bold">Algèbre Linéaire Avancée</h3>
+            </div>
+            <div class="p-4">
+                <p class="text-sm text-gray-600 mb-4">Espaces vectoriels, transformations et applications.</p>
+                <div class="flex justify-between text-xs text-gray-400">
+                    <span>38 Étudiants</span><span>Modifié le 18/02</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow animate-slide-up" style="animation-delay:300ms">
+            <div class="h-24 bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 flex items-end">
+                <h3 class="text-white font-bold">Réseaux & Systèmes</h3>
+            </div>
+            <div class="p-4">
+                <p class="text-sm text-gray-600 mb-4">Architecture TCP/IP, protocoles et sécurité réseau.</p>
+                <div class="flex justify-between text-xs text-gray-400">
+                    <span>52 Étudiants</span><span>Modifié le 01/03</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</template>
+
+    <!-- assignments -->
+<template id="page-assignments">
+<div class="min-h-full">
+<div class="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slide-down">
+        <div>
+            <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">Gestion des devoirs</h1>
+        </div>
+        <button class="flex items-center gap-2 bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-sm border border-white/60 hover:shadow-md transition-all font-semibold text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nouveau devoir
+        </button>
+    </div>
+
+    <!-- Stats cards — FIXED: was grid-cols-4 with only 3 items, now grid-cols-3 -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="group relative overflow-hidden backdrop-blur-xl bg-white/40 rounded-3xl border border-white/60 shadow-lg p-6 animate-slide-up" style="animation-delay:100ms">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors"></div>
+            <div class="p-3 bg-blue-500/10 rounded-2xl w-fit mb-4 border border-blue-200/50">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total devoirs</p>
+            <p class="text-4xl font-black text-gray-900 mt-1">24</p>
+        </div>
+        <div class="group relative overflow-hidden backdrop-blur-xl bg-white/40 rounded-3xl border border-white/60 shadow-lg p-6 animate-slide-up" style="animation-delay:200ms">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-colors"></div>
+            <div class="p-3 bg-green-500/10 rounded-2xl w-fit mb-4 border border-green-200/50">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Soumissions</p>
+            <p class="text-4xl font-black text-gray-900 mt-1">156</p>
+        </div>
+        <div class="group relative overflow-hidden backdrop-blur-xl bg-white/40 rounded-3xl border border-white/60 shadow-lg p-6 animate-slide-up" style="animation-delay:300ms">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors"></div>
+            <div class="p-3 bg-purple-500/10 rounded-2xl w-fit mb-4 border border-purple-200/50">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Complétion</p>
+            <p class="text-4xl font-black text-purple-600 mt-1">78%</p>
+        </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="backdrop-blur-xl bg-white/60 rounded-2xl p-4 border border-white/60 shadow-xl animate-slide-up flex flex-col md:flex-row gap-4 justify-between" style="animation-delay:400ms">
+        <div class="flex flex-wrap items-center gap-4 flex-1">
+            <div class="relative flex-1 max-w-sm">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </span>
+                <input type="text" placeholder="Rechercher un devoir..." class="w-full bg-white/50 border border-white/60 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all">
+            </div>
+            <div class="relative">
+                <select class="appearance-none bg-white/50 text-sm font-bold text-gray-700 border border-white/60 rounded-xl px-4 py-2.5 pr-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40">
+                    <option>Toutes les filières</option>
+                    <option>Informatique</option>
+                    <option>Mathématiques</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </div>
+        </div>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">Appliquer les filtres</button>
+    </div>
+
+    <!-- ASSIGNMENTS LIST — FIXED: was missing wrapper causing layout collapse -->
+    <div class="backdrop-blur-xl bg-white/40 rounded-3xl border border-white/60 shadow-2xl overflow-hidden animate-slide-up" style="animation-delay:500ms">
+        <div class="bg-white/20 px-6 py-4 border-b border-white/40">
+            <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                Devoirs en cours
+            </h3>
+        </div>
+
+        <div class="divide-y divide-white/40">
+            <!-- Assignment 1 -->
+            <div class="p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 hover:bg-white/60 transition-all duration-300 group">
+                <div class="flex items-center gap-5 flex-1">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform duration-300 flex-shrink-0">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-gray-900 text-xl tracking-tight">Analyse de données avancée</h4>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-sm text-gray-500 font-medium">Échéance : 15 Mars 2026</span>
+                            <span class="text-xs px-3 py-1 rounded-full bg-orange-100 text-orange-700 font-bold border border-orange-200">À RENDRE</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="bg-white hover:bg-gray-50 text-gray-900 font-bold px-5 py-3 rounded-2xl shadow-sm border border-gray-200 transition-all whitespace-nowrap">Voir soumissions</button>
+            </div>
+
+            <!-- Assignment 2 -->
+            <div class="p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 hover:bg-white/60 transition-all duration-300 group">
+                <div class="flex items-center gap-5 flex-1">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform duration-300 flex-shrink-0">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-gray-900 text-xl tracking-tight">Projet Machine Learning</h4>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-sm text-gray-500 font-medium">Échéance : 28 Mars 2026</span>
+                            <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200">EN COURS</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="bg-white hover:bg-gray-50 text-gray-900 font-bold px-5 py-3 rounded-2xl shadow-sm border border-gray-200 transition-all whitespace-nowrap">Voir soumissions</button>
+            </div>
+
+            <!-- Assignment 3 -->
+            <div class="p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 hover:bg-white/60 transition-all duration-300 group">
+                <div class="flex items-center gap-5 flex-1">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform duration-300 flex-shrink-0">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-black text-gray-900 text-xl tracking-tight">Optimisation Mathématique</h4>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-sm text-gray-500 font-medium">Terminé le 02 Mars 2026</span>
+                            <span class="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold border border-green-200">TERMINÉ</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="bg-gray-200 text-gray-600 font-bold px-5 py-3 rounded-2xl shadow-sm border border-gray-300 cursor-not-allowed whitespace-nowrap">Fermé</button>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+</div>
+</template>
+<!-- calendar -->
+<template id="page-calendar">
+<div class="max-w-7xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+    
+    <!-- Header with date and add button -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slide-down">
+        <div>
+            <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">Planning & Événements</h1>
+            <p class="text-gray-600 mt-1">Gérez vos cours, examens, TP et TD</p>
+        </div>
+        <div class="flex items-center gap-3">
+            
+            <button onclick="openEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nouvel événement
+            </button>
+        </div>
+    </div>
+
+    <!-- Calendar Navigation -->
+    <div class="flex items-center justify-between bg-white/80 backdrop-blur-xl rounded-2xl p-4 border border-gray-200 shadow-lg animate-slide-up" style="animation-delay:100ms">
+        <div class="flex items-center gap-2">
+            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <h2 class="text-xl font-bold text-gray-800 min-w-[200px] text-center">Mars 2026</h2>
+            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+        <div class="flex gap-2">
+            <button class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Aujourd'hui</button>
+            <select class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white">
+                <option>Mois</option>
+                <option>Semaine</option>
+                <option>Jour</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Legend / Filters -->
+    <div class="flex flex-wrap items-center gap-4 bg-white/40 backdrop-blur-xl rounded-xl p-4 border border-white/60 animate-slide-up" style="animation-delay:150ms">
+        <span class="text-sm font-medium text-gray-600">Filtres:</span>
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span> Cours
+        </button>
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-100 text-red-700 border border-red-200 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span> Examens
+        </button>
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-100 text-green-700 border border-green-200 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span> TP
+        </button>
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span> TD
+        </button>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/60 shadow-2xl overflow-hidden animate-slide-up" style="animation-delay:200ms">
+        
+        <!-- Week Days Header -->
+        <div class="grid grid-cols-7 bg-gray-50/80 border-b border-gray-200">
+            <div class="py-4 text-center text-sm font-bold text-gray-500">LUN</div>
+            <div class="py-4 text-center text-sm font-bold text-gray-500">MAR</div>
+            <div class="py-4 text-center text-sm font-bold text-gray-500">MER</div>
+            <div class="py-4 text-center text-sm font-bold text-gray-500">JEU</div>
+            <div class="py-4 text-center text-sm font-bold text-gray-500">VEN</div>
+            <div class="py-4 text-center text-sm font-bold text-gray-500">SAM</div>
+            <div class="py-4 text-center text-sm font-bold text-gray-500">DIM</div>
+        </div>
+
+        <!-- Calendar Days Grid -->
+        <div class="grid grid-cols-7 divide-x divide-y divide-gray-100">
+            <!-- Day 1 (previous month) -->
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">24</span>
+            </div>
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">25</span>
+            </div>
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">26</span>
+            </div>
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">27</span>
+            </div>
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">28</span>
+            </div>
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">1</span>
+            </div>
+            <div class="min-h-[120px] p-2 bg-gray-50/30">
+                <span class="text-sm text-gray-400">2</span>
+            </div>
+
+            <!-- Current Month Days with Events -->
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">3</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-blue-100 text-blue-700 rounded-md border-l-2 border-blue-500 cursor-pointer hover:bg-blue-200 transition-colors" onclick="viewEvent(1)">
+                        <div class="font-medium">Cours - Algèbre</div>
+                        <div class="text-xs opacity-75">08:30 - Salle 204</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">4</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-purple-100 text-purple-700 rounded-md border-l-2 border-purple-500 cursor-pointer hover:bg-purple-200 transition-colors" onclick="viewEvent(2)">
+                        <div class="font-medium">TD - Analyse</div>
+                        <div class="text-xs opacity-75">10:15 - Salle 105</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">5</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-green-100 text-green-700 rounded-md border-l-2 border-green-500 cursor-pointer hover:bg-green-200 transition-colors" onclick="viewEvent(3)">
+                        <div class="font-medium">TP - Python</div>
+                        <div class="text-xs opacity-75">14:00 - Labo 12</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">6</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-blue-100 text-blue-700 rounded-md border-l-2 border-blue-500 cursor-pointer hover:bg-blue-200 transition-colors" onclick="viewEvent(4)">
+                        <div class="font-medium">Cours - Réseaux</div>
+                        <div class="text-xs opacity-75">09:00 - Salle 305</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">7</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-purple-100 text-purple-700 rounded-md border-l-2 border-purple-500 cursor-pointer hover:bg-purple-200 transition-colors" onclick="viewEvent(5)">
+                        <div class="font-medium">TD - Probabilités</div>
+                        <div class="text-xs opacity-75">11:30 - Salle 102</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">8</span>
+            </div>
+
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">9</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-red-100 text-red-700 rounded-md border-l-2 border-red-500 cursor-pointer hover:bg-red-200 transition-colors" onclick="viewEvent(6)">
+                        <div class="font-medium">EXAMEN - Maths</div>
+                        <div class="text-xs opacity-75">09:00 - Amphithéâtre A</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Continue with more days... -->
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">10</span>
+            </div>
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">11</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-blue-100 text-blue-700 rounded-md border-l-2 border-blue-500 cursor-pointer hover:bg-blue-200 transition-colors" onclick="viewEvent(7)">
+                        <div class="font-medium">Cours - BD</div>
+                        <div class="text-xs opacity-75">13:30 - Salle 210</div>
+                    </div>
+                </div>
+            </div>
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">12</span>
+            </div>
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">13</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-green-100 text-green-700 rounded-md border-l-2 border-green-500 cursor-pointer hover:bg-green-200 transition-colors" onclick="viewEvent(8)">
+                        <div class="font-medium">TP - Algorithmique</div>
+                        <div class="text-xs opacity-75">15:00 - Labo 8</div>
+                    </div>
+                </div>
+            </div>
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">14</span>
+            </div>
+            <div class="min-h-[120px] p-2 hover:bg-blue-50/30 transition-colors">
+                <span class="text-sm font-semibold text-gray-700">15</span>
+                <div class="mt-1 space-y-1">
+                    <div class="text-xs p-1 bg-red-100 text-red-700 rounded-md border-l-2 border-red-500 cursor-pointer hover:bg-red-200 transition-colors" onclick="viewEvent(9)">
+                        <div class="font-medium">EXAMEN - Python</div>
+                        <div class="text-xs opacity-75">09:00 - Salle 401</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events List -->
+    <div class="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/60 shadow-xl p-6 animate-slide-up" style="animation-delay:250ms">
+        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Événements à venir
+        </h3>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
+                        <span class="text-xs font-bold text-blue-600">MAR</span>
+                        <span class="text-lg font-bold text-blue-700">15</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Cours - Data Science</h4>
+                        <p class="text-sm text-gray-500">08:30 - 10:30 · Salle 204 · L3 Informatique</p>
+                    </div>
+                </div>
+                <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">Cours</span>
+            </div>
+            
+            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex flex-col items-center justify-center">
+                        <span class="text-xs font-bold text-red-600">JEU</span>
+                        <span class="text-lg font-bold text-red-700">17</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Examen - Algèbre Linéaire</h4>
+                        <p class="text-sm text-gray-500">14:00 - 16:00 · Amphithéâtre B · L2 Maths</p>
+                    </div>
+                </div>
+                <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-medium">Examen</span>
+            </div>
+
+            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex flex-col items-center justify-center">
+                        <span class="text-xs font-bold text-green-600">VEN</span>
+                        <span class="text-lg font-bold text-green-700">18</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">TP - Machine Learning</h4>
+                        <p class="text-sm text-gray-500">10:00 - 12:00 · Labo 5 · M1 Data</p>
+                    </div>
+                </div>
+                <span class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">TP</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Event Modal (Hidden by default) -->
+<div id="event-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-slide-down">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-900">Nouvel événement</h2>
+                <button onclick="closeEventModal()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        <form id="event-form" class="p-6 space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Titre de l'événement</label>
+                    <input type="text" placeholder="ex: Cours d'algèbre" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="cours">Cours</option>
+                        <option value="td">TD</option>
+                        <option value="tp">TP</option>
+                        <option value="examen">Examen</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Matière</label>
+                    <select class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>Algèbre</option>
+                        <option>Analyse</option>
+                        <option>Programmation</option>
+                        <option>Réseaux</option>
+                        <option>Base de données</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" value="2026-03-15" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Salle</label>
+                    <input type="text" placeholder="ex: Salle 204" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heure début</label>
+                    <input type="time" value="08:30" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heure fin</label>
+                    <input type="time" value="10:30" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Classe / Groupe</label>
+                    <select class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>L3 Informatique - Groupe A</option>
+                        <option>L3 Informatique - Groupe B</option>
+                        <option>M1 Data Science</option>
+                        <option>L2 Mathématiques</option>
+                    </select>
+                </div>
+                
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description (optionnelle)</label>
+                    <textarea rows="3" placeholder="Ajoutez des détails sur l'événement..." class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
+                <input type="checkbox" id="recurring" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                <label for="recurring" class="text-sm text-gray-700">Événement récurrent (chaque semaine)</label>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="closeEventModal()" class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors">Annuler</button>
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">Créer l'événement</button>
+            </div>
+        </form>
+    </div>
+</div>
+</template>
+    <!-- chatbot -->
+<template id="page-chatbot">
+<div class="max-w-4xl mx-auto h-[calc(100vh-200px)] flex flex-col space-y-4 animate-fade-in">
+    <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+        <div class="bg-gray-50 p-4 border-b font-semibold text-gray-700 flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+            Assistant IA ENT
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll" id="chat-messages">
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div>
+                <div class="bg-gray-100 p-3 rounded-2xl text-sm max-w-[80%]">Bonjour Thomas ! Comment puis-je vous aider aujourd'hui ?</div>
+            </div>
+        </div>
+        <div class="p-4 border-t bg-white">
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Posez votre question..." class="flex-1 border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button onclick="sendChat()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-sm">Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+</template>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script>
+const contentDiv = document.getElementById('main-content');
+const headerTitle = document.getElementById('header-title');
+
+const pageTitles = { accueil:'Accueil', courses:'Mes Cours', assignments:'Devoirs', chatbot:'Assistant IA' };
+
+function router(pageId) {
+    // Load from inline <template> instead of fetch() — fixes the file:// issue
+    const tmpl = document.getElementById('page-' + pageId);
+    if (!tmpl) {
+        contentDiv.innerHTML = '<div class="text-center text-red-500 mt-20">Page introuvable.</div>';
+        return;
+    }
+
+    // Inject content
+    contentDiv.innerHTML = '';
+    contentDiv.appendChild(tmpl.content.cloneNode(true));
+
+    // Update header
+    headerTitle.textContent = pageTitles[pageId] || pageId;
+
+    // Update sidebar highlight
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-50', 'text-blue-600');
+        btn.classList.add('text-gray-700');
+    });
+    const activeBtn = document.getElementById('btn-' + pageId);
+    if (activeBtn) {
+        activeBtn.classList.remove('text-gray-700');
+        activeBtn.classList.add('bg-blue-50', 'text-blue-600');
+    }
+
+    // Page-specific logic
+    if (pageId === 'accueil') {
+        const dateSpans = document.querySelectorAll('.current-date-span');
+        const today = new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+        dateSpans.forEach(s => s.textContent = today);
+    }
+}
+
+// Simple chat demo
+function sendChat() {
+    const input = document.getElementById('chat-input');
+    if (!input || !input.value.trim()) return;
+    const msgs = document.getElementById('chat-messages');
+    // User bubble
+    msgs.innerHTML += `<div class="flex gap-3 justify-end"><div class="bg-blue-600 text-white p-3 rounded-2xl text-sm max-w-[80%]">${input.value}</div></div>`;
+    const q = input.value; input.value = '';
+    // AI reply
+    setTimeout(() => {
+        msgs.innerHTML += `<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div><div class="bg-gray-100 p-3 rounded-2xl text-sm max-w-[80%]">Merci pour votre question sur "${q}". Je suis en cours de développement — cette fonctionnalité sera bientôt disponible !</div></div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+    }, 600);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+document.addEventListener('keydown', e => {
+    const input = document.getElementById('chat-input');
+    if (input && e.key === 'Enter') sendChat();
+});
+
+// Dropdown
+const userButton = document.getElementById('user-menu-button');
+const dropdown = document.getElementById('user-dropdown');
+userButton.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('hidden'); });
+document.addEventListener('click', e => {
+    if (!dropdown.contains(e.target) && !userButton.contains(e.target)) dropdown.classList.add('hidden');
+});
+
+function logout() {
+    document.body.style.opacity = '0.5';
+    setTimeout(() => { document.body.style.opacity = '1'; alert('Déconnexion simulée.'); }, 500);
+}
+// Calendar functions
+function openEventModal() {
+    document.getElementById('event-modal').classList.remove('hidden');
+}
+
+function closeEventModal() {
+    document.getElementById('event-modal').classList.add('hidden');
+}
+
+function viewEvent(eventId) {
+    alert('Voir détails de l\'événement #' + eventId);
+    // You can implement a detailed view modal here
+}
+
+// Add click outside to close modal
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('event-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+        if (e.target.classList.contains('fixed') && e.target.classList.contains('bg-black/50')) {
+            closeEventModal();
+        }
+    }
+});
+
+// Prevent modal close when clicking inside
+document.getElementById('event-modal')?.addEventListener('click', function(e) {
+    e.stopPropagation();
+});
+
+// Update date in calendar header
+const dateSpan = document.querySelector('.current-date-calendar');
+if (dateSpan) {
+    const today = new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    dateSpan.textContent = today;
+}
+// Start on home
+window.onload = () => router('accueil');
+</script>
+</body>
+</html>
