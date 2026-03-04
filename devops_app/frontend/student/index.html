@@ -2,110 +2,257 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Portail Étudiant - ENT EST Salé</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENT EST · Espace Étudiant</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .active-link { background: rgba(255, 255, 255, 0.2); border-left: 4px solid white; }
-        .content-fade { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; overflow-x: hidden; }
+        .content-area { margin-left: 256px; padding-top: 64px; min-height: 100vh; transition: all 0.3s ease; }
+        .nav-link.active { background-color: #f5f3ff; color: #4f46e5; border-right: 4px solid #4f46e5; }
+        
+        @keyframes fadeIn   { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in   { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slide-up  { opacity: 0; animation: slideUp 0.5s ease forwards; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body>
 
-<div class="flex">
-    <nav class="w-64 bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-600 text-white h-screen fixed left-0 top-0 p-6 shadow-xl flex flex-col rounded-br-[30px] z-50">
-        <div class="flex flex-col items-center mb-10 text-center">
-            <h2 class="text-2xl font-bold flex items-center">
-                <span class="mr-2">🎓</span> ENT-Student
-            </h2>
-        </div>
-
-        <div class="space-y-4 flex-1">
-            <button onclick="loadSection('accueil.html', 'Bonjour, Anas ! 👋', this)" class="nav-item flex items-center w-full px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <span class="mr-3">🏠</span> Accueil
-            </button>
-            <button onclick="loadSection('notes.html', 'Mes Notes 📝', this)" class="nav-item flex items-center w-full px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <span class="mr-3">📝</span> Mes Notes
-            </button>
-            <button onclick="loadSection('examens.html', 'Calendrier des Examens 📅', this)" class="nav-item flex items-center w-full px-4 py-3 rounded-xl hover:bg-white/10 transition">
-                <span class="mr-3">📅</span> Examens
-            </button>
-        </div>
-
-        <div class="mt-auto pt-6 border-t border-white/20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="h-10 w-10 rounded-full bg-white text-teal-600 flex items-center justify-center font-bold">
-                    AA
+<div class="app-container">
+    <header class="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 z-20">
+        <div class="h-full px-8 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-800" id="header-title">Accueil</h2>
+            <div class="flex items-center gap-4">
+                <button class="relative p-2 text-gray-400 hover:bg-gray-100 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
+                    <img src="https://ui-avatars.com/api/?name=Yassine+Alami&background=4F46E5&color=fff" class="w-8 h-8 rounded-full">
+                    <div class="text-left hidden md:block">
+                        <p class="text-sm font-medium text-gray-900">Yassine Alami</p>
+                        <p class="text-xs text-gray-500">Étudiant · L3 Info</p>
+                    </div>
                 </div>
-                <p class="text-sm font-bold truncate w-24">Anas Alami</p>
             </div>
-            <a href="../login/index.html" class="p-2 hover:bg-red-500/20 rounded-lg transition" title="Déconnexion">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-            </a>
         </div>
-    </nav>
+    </header>
 
-    <main class="ml-64 flex-1 p-10">
-        <header class="mb-10">
-            <h1 id="page-title" class="text-3xl font-bold text-gray-800">Chargement...</h1>
-            <p id="page-subtitle" class="text-gray-500 mt-1">Espace Numérique de Travail - EST Salé</p>
-        </header>
-
-        <div id="dynamic-content" class="content-fade">
+    <aside class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col z-30">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                </div>
+                <h1 class="font-bold text-gray-900 tracking-tight">ENT Étudiant</h1>
             </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-1">
+            <button onclick="router('accueil')" id="btn-accueil" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Accueil
+            </button>
+            <button onclick="router('notes')" id="btn-notes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Mes Notes
+            </button>
+            <button onclick="router('calendar')" id="btn-calendar" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 7V3m8 4V3m-9 4h10M4 12h16m-6 4l-6 6m6-6l6 6"/></svg>
+                Calendrier
+            </button>
+            <button onclick="router('devoirs')" id="btn-devoirs" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                Devoirs (TP/TD)
+            </button>
+             <button onclick="router('chatbot')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50" id="btn-chatbot">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <span class="font-medium">Assistant IA</span>
+                </button>
+        </nav>
+        <div class="p-4 border-t border-gray-100 text-xs text-center text-gray-400">Version 2.0.4 - 2026</div>
+    </aside>
+
+    <main class="content-area">
+        <div id="main-content" class="p-8 animate-fade-in"></div>
     </main>
 </div>
 
-<script>
-    async function loadSection(file, title, element) {
-        document.getElementById('page-title').innerText = title;
+<template id="page-accueil">
+    <div class="max-w-7xl mx-auto space-y-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Bonjour, Yassine 👋</h1>
+            <p class="text-gray-500">Prêt pour tes cours d'aujourd'hui ?</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg animate-slide-up">
+                <p class="text-indigo-100 text-sm font-medium">Moyenne Générale</p>
+                <h3 class="text-4xl font-bold mt-2">15.42/20</h3>
+                <div class="mt-4 flex items-center gap-2 text-xs bg-white/20 w-fit px-2 py-1 rounded">
+                    <span>+0.5 ce semestre</span>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-slide-up" style="animation-delay:100ms">
+                <p class="text-gray-400 text-sm font-medium">Cours aujourd'hui</p>
+                <h3 class="text-4xl font-bold mt-2 text-gray-800">4</h3>
+                <p class="text-xs text-indigo-600 mt-4 font-semibold italic">Prochain : Algèbre @ 10:15</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-slide-up" style="animation-delay:200ms">
+                <p class="text-gray-400 text-sm font-medium">Devoirs à rendre</p>
+                <h3 class="text-4xl font-bold mt-2 text-red-500">2</h3>
+                <p class="text-xs text-gray-500 mt-4">Échéance : Vendredi 23:59</p>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="page-notes">
+    <div class="max-w-5xl mx-auto animate-fade-in">
+        <div class="flex justify-between items-end mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Mes Notes & Résultats</h1>
+            <button class="text-indigo-600 font-semibold text-sm hover:underline">Télécharger le relevé (PDF)</button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Module</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Type</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Note</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium">Algorithmique & Structures de Données</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">Contrôle Continu</td>
+                        <td class="px-6 py-4 font-bold text-indigo-600">16.5</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-bold bg-green-100 text-green-700 rounded-full">Validé</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium">Mathématiques : Algèbre Linéaire</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">Examen Final</td>
+                        <td class="px-6 py-4 font-bold text-indigo-600">14.0</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-bold bg-green-100 text-green-700 rounded-full">Validé</span></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium">Architecture des Réseaux</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">TP Noté</td>
+                        <td class="px-6 py-4 font-bold text-indigo-600">18.0</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-bold bg-green-100 text-green-700 rounded-full">Validé</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</template>
+
+<template id="page-devoirs">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <h1 class="text-3xl font-bold text-gray-900">Devoirs & Travaux Pratiques</h1>
         
-        // Gestion du style actif sur les boutons
-        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active-link'));
-        if(element) element.classList.add('active-link');
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-2xl border-l-4 border-orange-400 shadow-sm flex justify-between items-center group hover:shadow-md transition-all">
+                <div>
+                    <span class="text-xs font-bold text-orange-600 uppercase tracking-wider">TP · Informatique</span>
+                    <h4 class="text-lg font-bold text-gray-800 mt-1">Implémentation d'une API FastAPI</h4>
+                    <p class="text-sm text-gray-500">Échéance : Demain, 23h59</p>
+                </div>
+                <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-indigo-100 shadow-lg group-hover:scale-105 transition-transform">Rendre</button>
+            </div>
 
-        try {
-            const response = await fetch(file);
-            const html = await response.text();
-            const container = document.getElementById('dynamic-content');
-            container.innerHTML = html;
+            <div class="bg-white p-6 rounded-2xl border-l-4 border-blue-400 shadow-sm flex justify-between items-center opacity-75">
+                <div>
+                    <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">TD · Mathématiques</span>
+                    <h4 class="text-lg font-bold text-gray-800 mt-1">Série d'exercices n°4 : Espaces Vectoriels</h4>
+                    <p class="text-sm text-green-600 font-medium">✓ Remis le 01/03/2026</p>
+                </div>
+                <span class="text-gray-400 text-sm italic">Terminé</span>
+            </div>
+        </div>
+    </div>
+</template>
 
-            // Ré-initialiser les graphiques si on charge l'accueil
-            if(file === 'accueil.html') {
-                setTimeout(initGradeChart, 100);
-            }
-        } catch (err) {
-            console.error("Erreur de chargement:", err);
-        }
-    }
+<template id="page-calendar">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <h1 class="text-3xl font-bold text-gray-900">Mon Emploi du Temps</h1>
+        <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center">
+            <div class="grid grid-cols-5 gap-4">
+                <div class="font-bold text-gray-400 py-2">LUN</div>
+                <div class="font-bold text-gray-400 py-2">MAR</div>
+                <div class="font-bold text-indigo-600 py-2 bg-indigo-50 rounded-lg">MER</div>
+                <div class="font-bold text-gray-400 py-2">JEU</div>
+                <div class="font-bold text-gray-400 py-2">VEN</div>
+                
+                <div class="h-32 bg-gray-50 rounded-xl border border-dashed border-gray-200"></div>
+                <div class="h-32 bg-indigo-100 text-indigo-700 p-2 rounded-xl text-xs font-bold">08:30 - 10:30<br>Architecture S2</div>
+                <div class="h-32 bg-purple-100 text-purple-700 p-2 rounded-xl text-xs font-bold border-2 border-purple-300">10:15 - 12:15<br>Maths (Amphi A)</div>
+                <div class="h-32 bg-gray-50 rounded-xl border border-dashed border-gray-200"></div>
+                <div class="h-32 bg-green-100 text-green-700 p-2 rounded-xl text-xs font-bold">14:00 - 18:00<br>TP Réseaux</div>
+            </div>
+            <p class="mt-8 text-gray-400 text-sm italic">Note : Les changements d'emploi du temps sont notifiés par mail.</p>
+        </div>
+    </div>
+</template>
+<template id="page-chatbot">
+<div class="max-w-4xl mx-auto h-[calc(100vh-200px)] flex flex-col space-y-4 animate-fade-in">
+    <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+        <div class="bg-gray-50 p-4 border-b font-semibold text-gray-700 flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+            Assistant IA ENT
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll" id="chat-messages">
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div>
+                <div class="bg-gray-100 p-3 rounded-2xl text-sm max-w-[80%]">Bonjour Thomas ! Comment puis-je vous aider aujourd'hui ?</div>
+            </div>
+        </div>
+        <div class="p-4 border-t bg-white">
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Posez votre question..." class="flex-1 border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button onclick="sendChat()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-sm">Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+</template>
 
-    function initGradeChart() {
-        const ctx = document.getElementById('studentChart');
-        if(ctx) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['NoSQL', 'Web', 'Backend', 'UX/UI', 'Mobile'],
-                    datasets: [{
-                        label: 'Note / 20',
-                        data: [17, 14.5, 15, 17, 13],
-                        backgroundColor: '#14b8a6',
-                        borderRadius: 8
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
-        }
-    }
+<script>
+    const contentDiv = document.getElementById('main-content');
+    const headerTitle = document.getElementById('header-title');
 
-    // Charger l'accueil au démarrage
-    window.onload = () => {
-        const firstBtn = document.querySelector('.nav-item');
-        loadSection('accueil.html', 'Bonjour, Anas ! 👋', firstBtn);
+    const titles = { 
+        accueil: 'Tableau de bord', 
+        notes: 'Mes Notes', 
+        calendar: 'Emploi du temps', 
+        devoirs: 'Travaux à rendre' 
     };
+
+    function router(pageId) {
+        const tmpl = document.getElementById('page-' + pageId);
+        if (!tmpl) return;
+
+        contentDiv.innerHTML = '';
+        contentDiv.appendChild(tmpl.content.cloneNode(true));
+        headerTitle.textContent = titles[pageId];
+
+        // Highlight sidebar
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'shadow-sm');
+            btn.classList.add('text-gray-600');
+        });
+        const activeBtn = document.getElementById('btn-' + pageId);
+        if (activeBtn) {
+            activeBtn.classList.remove('text-gray-600');
+            activeBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'shadow-sm');
+        }
+    }
+
+    // Init
+    window.onload = () => router('accueil');
 </script>
+
 </body>
 </html>
