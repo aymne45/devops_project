@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Heroicons -->
   <script src="https://unpkg.com/heroicons@2.0.16/dist/heroicons.min.js"></script>
+  <!-- API Client -->
+  <script src="../js/api.js"></script>
 </head>
 
 <body class="bg-gradient-to-br from-teal-400 via-cyan-400 to-blue-500 flex items-center justify-center min-h-screen p-4">
@@ -30,18 +32,23 @@
 
     <!-- Email Input -->
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-2 ml-1">Email</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2 ml-1">Nom d'utilisateur</label>
         <div class="relative group">
             <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500 group-focus-within:text-indigo-500 transition duration-200">
-                <!-- Envelope Icon -->
+                <!-- User Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
             </span>
-            <input id="email" type="email" placeholder="votre@um5.ac.ma"
+            <input id="username" type="text" placeholder="nom d'utilisateur"
                 class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl 
                        focus:outline-none focus:border-indigo-500 focus:bg-white 
                        transition duration-200 text-gray-700 placeholder-gray-400">
+        </div>
+        <div id="error-message" class="mt-2 text-sm text-red-600 hidden"></div>
+        <div id="already-logged-message" class="mt-2 p-3 text-sm text-blue-800 bg-blue-100 rounded-lg hidden flex justify-between items-center">
+            <span>✓ Vous êtes déjà connecté. Redirection en cours...</span>
+            <button type="button" onclick="forceLogout()" class="text-blue-600 hover:text-blue-800 font-bold underline ml-4">Se déconnecter</button>
         </div>
     </div>
 
@@ -80,12 +87,16 @@
 </div>
 
     <!-- Button -->
-<button 
+<button id="login-btn"
     class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white font-bold py-3.5 rounded-xl 
            hover:from-green-700 hover:to-blue-700 active:from-green-800 active:to-blue-800
            transform hover:scale-[1.02] transition duration-200 shadow-lg shadow-green-600/30">
     Se connecter
 </button>
+
+<div id="loader" class="hidden mt-4 text-center">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+</div>
 
     
 
@@ -120,6 +131,102 @@
                 // Optional: Add focus to input after toggling
                 passwordInput.focus();
             });
+
+            // Login functionality
+            const loginBtn = document.getElementById('login-btn');
+            const usernameInput = document.getElementById('username');
+            const errorMessage = document.getElementById('error-message');
+            const alreadyLoggedMessage = document.getElementById('already-logged-message');
+            const loader = document.getElementById('loader');
+
+            loginBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                // Validation
+                if (!username || !password) {
+                    showError('Veuillez remplir tous les champs');
+                    return;
+                }
+
+                // Show loading
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Connexion...';
+                loader.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+
+                try {
+                    await login(username, password);
+                    // Redirection is handled in login function
+                } catch (error) {
+                    showError(error.message || 'Erreur de connexion');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Se connecter';
+                    loader.classList.add('hidden');
+                }
+            });
+
+            // Enter key to submit
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginBtn.click();
+                }
+            });
+
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginBtn.click();
+                }
+            });
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+            }
+
+            function forceLogout() {
+                Auth.logout();
+                document.getElementById('already-logged-message').classList.add('hidden');
+                showError('Vous avez été déconnecté. Veuillez vous reconnecter.');
+            }
+
+            // Check if already logged in - but verify token is still valid
+            async function checkExistingAuth() {
+                if (Auth.isAuthenticated()) {
+                    // Show message
+                    document.getElementById('already-logged-message').classList.remove('hidden');
+                    
+                    try {
+                        // Verify token is still valid
+                        await getCurrentUser();
+                        const user = Auth.getUser();
+                        
+                        // Wait 2 seconds before redirect to allow user to see the message and logout if needed
+                        setTimeout(() => {
+                            switch (user.role) {
+                                case 'admin':
+                                    window.location.href = '/admin/dashboard.html';
+                                    break;
+                                case 'teacher':
+                                    window.location.href = '/teacher/teacher_fixed.html';
+                                    break;
+                                case 'student':
+                                    window.location.href = '/student/index.html';
+                                    break;
+                            }
+                        }, 2000);
+                    } catch (error) {
+                        // Token invalid, clear it
+                        Auth.logout();
+                        document.getElementById('already-logged-message').classList.add('hidden');
+                        showError('Votre session a expiré. Veuillez vous reconnecter.');
+                    }
+                }
+            }
+            
+            checkExistingAuth();
         </script>
 </body>
 </html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ENT EST · Espace Enseignant</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/api.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: #f9fafb; margin: 0; overflow-x: hidden; }
@@ -737,21 +738,75 @@ function router(pageId) {
     }
 }
 
-// Simple chat demo
-function sendChat() {
+// Chat with API integration
+async function sendChat() {
     const input = document.getElementById('chat-input');
-    if (!input || !input.value.trim()) return;
     const msgs = document.getElementById('chat-messages');
+    
+    if (!input || !msgs) return;
+    
+    const question = input.value.trim();
+    if (!question) return;
+
     // User bubble
-    msgs.innerHTML += `<div class="flex gap-3 justify-end"><div class="bg-blue-600 text-white p-3 rounded-2xl text-sm max-w-[80%]">${input.value}</div></div>`;
-    const q = input.value; input.value = '';
-    // AI reply
-    setTimeout(() => {
-        msgs.innerHTML += `<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div><div class="bg-gray-100 p-3 rounded-2xl text-sm max-w-[80%]">Merci pour votre question sur "${q}". Je suis en cours de développement — cette fonctionnalité sera bientôt disponible !</div></div>`;
-        msgs.scrollTop = msgs.scrollHeight;
-    }, 600);
+    msgs.innerHTML += `
+        <div class="flex gap-3 justify-end">
+            <div class="bg-blue-600 text-white p-3 rounded-2xl text-sm max-w-[80%]">${escapeHtml(question)}</div>
+            <div class="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${user.username.charAt(0).toUpperCase()}</div>
+        </div>
+    `;
+    
+    input.value = '';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Show loading
+    const loadingId = 'loading-' + Date.now();
+    msgs.innerHTML += `
+        <div id="${loadingId}" class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div>
+            <div class="bg-gray-100 p-3 rounded-2xl text-sm">
+                <div class="flex gap-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+        const response = await ChatbotAPI.chat(question);
+        
+        document.getElementById(loadingId)?.remove();
+        
+        msgs.innerHTML += `
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div>
+                <div class="bg-gray-100 p-3 rounded-2xl text-sm max-w-[80%]">${escapeHtml(response.answer)}</div>
+            </div>
+        `;
+    } catch (error) {
+        document.getElementById(loadingId)?.remove();
+        
+        const errorMsg = error.message || error.detail || JSON.stringify(error) || 'Erreur inconnue';
+        msgs.innerHTML += `
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">!</div>
+                <div class="bg-red-50 text-red-700 p-3 rounded-2xl text-sm max-w-[80%]">Erreur: ${escapeHtml(errorMsg)}</div>
+            </div>
+        `;
+    }
+    
     msgs.scrollTop = msgs.scrollHeight;
 }
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 document.addEventListener('keydown', e => {
     const input = document.getElementById('chat-input');
     if (input && e.key === 'Enter') sendChat();
@@ -765,9 +820,21 @@ document.addEventListener('click', e => {
     if (!dropdown.contains(e.target) && !userButton.contains(e.target)) dropdown.classList.add('hidden');
 });
 
+// Check authentication
+if (!Auth.isAuthenticated()) {
+    window.location.href = '/login/index.html';
+}
+
+const user = Auth.getUser();
+if (user.role !== 'teacher') {
+    alert('Accès refusé. Cette page est réservée aux enseignants.');
+    Auth.logout();
+    window.location.href = '/login/index.html';
+}
+
 function logout() {
-    document.body.style.opacity = '0.5';
-    setTimeout(() => { document.body.style.opacity = '1'; alert('Déconnexion simulée.'); }, 500);
+    Auth.logout();
+    window.location.href = '/login/index.html';
 }
 // Calendar functions
 function openEventModal() {

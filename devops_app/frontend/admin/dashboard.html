@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ENT EST · Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/api.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
@@ -24,8 +25,8 @@
                     <h1 class="text-xl font-bold text-gray-800">Panel Admin ENT</h1>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-500 italic">Session: Administrateur Principal</span>
-                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium">Déconnexion</button>
+                    <span id="admin-name" class="text-sm text-gray-500 italic">Session: Administrateur Principal</span>
+                    <button onclick="logout()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium">Déconnexion</button>
                 </div>
             </div>
         </div>
@@ -105,40 +106,93 @@
     </div>
 
     <script>
-        const students = [
-            { id: 1, name: "Amine Salami", email: "amine.salami@um5.ac.ma", extra: "Génie Informatique", status: "Actif" },
-            { id: 2, name: "Sara El Fassi", email: "sara.fassi@um5.ac.ma", extra: "Economie", status: "Actif" },
-            { id: 3, name: "Karim Bennani", email: "k.bennani@um5.ac.ma", extra: "Génie Informatique", status: "En attente" }
-        ];
+        // Check authentication
+        if (!Auth.isAuthenticated()) {
+            window.location.href = '/login/index.html';
+        }
 
-        const teachers = [
-            { id: 4, name: "Pr. Ahmed Toumi", email: "a.toumi@um5.ac.ma", extra: "Mathématiques", status: "Actif" },
-            { id: 5, name: "Dr. Laila Mansouri", email: "l.mansouri@um5.ac.ma", extra: "Systèmes d'Information", status: "Actif" }
-        ];
+        const user = Auth.getUser();
+        if (user.role !== 'admin') {
+            alert('Accès refusé. Vous devez être administrateur.');
+            Auth.logout();
+            window.location.href = '/login/index.html';
+        }
 
+        // Display admin name
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('admin-name').textContent = `Session: ${user.full_name || user.username}`;
+        });
+
+        let students = [];
+        let teachers = [];
         let currentTab = 'students';
 
-        function renderTable() {
-            const tbody = document.getElementById('user-table-body');
-            const data = currentTab === 'students' ? students : teachers;
-            const extraCol = document.getElementById('col-extra');
-            
-            extraCol.innerText = currentTab === 'students' ? 'Filière' : 'Département';
-            tbody.innerHTML = '';
+        // Lif (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            Aucun ${currentTab === 'students' ? 'étudiant' : 'enseignant'} trouvé
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
 
             data.forEach(user => {
+                const displayName = user.full_name || user.username;
+                const initial = displayName.charAt(0).toUpperCase();
+                const extraInfo = user.role === 'student' ? 'Génie Informatique' : 'Département';
+                
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-4 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
-                                ${user.name.charAt(0)}
+                                ${initial}
                             </div>
-                            <span class="font-medium text-gray-800">${user.name}</span>
+                            <span class="font-medium text-gray-800">${displayName}</span>
                         </td>
                         <td class="px-6 py-4 text-gray-600 text-sm">${user.email}</td>
-                        <td class="px-6 py-4 text-gray-600 text-sm">${user.extra}</td>
+                        <td class="px-6 py-4 text-gray-600 text-sm">${extraInfo}</td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold ${user.status === 'Actif' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                Actif
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="editUser('${user.username}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <button onclick="confirmDelete('${user.username}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function editUser(username) {
+            alert('Fonctionnalité de modification à venir pour: ' + username);
+        }
+
+        async function confirmDelete(username) {
+            if(!confirm(`Êtes-vous sûr de vouloir supprimer ${username} ?`)) {
+                return;
+            }
+            
+            try {
+                await AdminAPI.deleteUser(username);
+                alert("Utilisateur supprimé avec succès");
+                await loadUsers(); // Reload
+            } catch (error) {
+                alert("Erreur lors de la suppression: " + error.message);
+            }     <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+        // Initial Load
+        loadUsers         <span class="px-3 py-1 rounded-full text-xs font-bold ${user.status === 'Actif' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
                                 ${user.status}
                             </span>
                         </td>
