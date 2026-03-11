@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     hashed_password TEXT,
     role TEXT,
     full_name TEXT,
+    filiere TEXT,
     created_at TIMESTAMP
 );
 

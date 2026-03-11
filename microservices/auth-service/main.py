@@ -54,8 +54,10 @@ def get_cassandra_session():
             username TEXT,
             email TEXT,
             hashed_password TEXT,
+            plain_password TEXT,
             role TEXT,
             full_name TEXT,
+            filiere TEXT,
             created_at TIMESTAMP
         )
     """)
@@ -73,6 +75,7 @@ class User(BaseModel):
     email: str
     full_name: str
     role: str  # admin, teacher, student
+    filiere: Optional[str] = None
 
 class UserInDB(User):
     id: uuid.UUID
@@ -81,6 +84,7 @@ class UserInDB(User):
 
 class UserCreate(User):
     password: str
+    filiere: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
@@ -120,13 +124,39 @@ def get_user_by_username(session, username: str):
             email=user.email,
             full_name=user.full_name,
             role=user.role,
+            filiere=user.filiere if hasattr(user, 'filiere') else None,
+            hashed_password=user.hashed_password,
+            created_at=user.created_at
+        )
+    return None
+
+def get_user_by_email(session, email: str):
+    rows = session.execute(
+        "SELECT * FROM users WHERE email = %s ALLOW FILTERING",
+        [email]
+    )
+    user = rows.one()
+    if user:
+        return UserInDB(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            full_name=user.full_name,
+            role=user.role,
+            filiere=user.filiere if hasattr(user, 'filiere') else None,
             hashed_password=user.hashed_password,
             created_at=user.created_at
         )
     return None
 
 def authenticate_user(session, username: str, password: str):
+    # Try to find user by username first
     user = get_user_by_username(session, username)
+    
+    # If not found, try by email
+    if not user:
+        user = get_user_by_email(session, username)
+    
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -177,17 +207,18 @@ async def register(user: UserCreate):
     
     session.execute(
         """
-        INSERT INTO users (id, username, email, hashed_password, role, full_name, created_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO users (id, username, email, hashed_password, plain_password, role, full_name, filiere, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (user_id, user.username, user.email, hashed_password, user.role, user.full_name, datetime.utcnow())
+        (user_id, user.username, user.email, hashed_password, user.password, user.role, user.full_name, user.filiere, datetime.utcnow())
     )
     
     return User(
         username=user.username,
         email=user.email,
         full_name=user.full_name,
-        role=user.role
+        role=user.role,
+        filiere=user.filiere
     )
 
 @app.post("/token", response_model=Token)
@@ -225,7 +256,8 @@ async def read_users_me(current_user: UserInDB = Depends(get_current_user)):
         username=current_user.username,
         email=current_user.email,
         full_name=current_user.full_name,
-        role=current_user.role
+        role=current_user.role,
+        filiere=current_user.filiere
     )
 
 @app.post("/verify-token")
@@ -239,6 +271,53 @@ async def verify_token(token: str):
         return {"valid": True, "username": username, "role": role}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.get("/all-users")
+async def get_all_users():
+    """Get all users - for admin dashboard"""
+    session = get_cassandra_session()
+    
+    rows = session.execute("SELECT id, username, email, full_name, role, filiere, plain_password, created_at FROM users")
+    
+    users = []
+    for row in rows:
+        users.append({
+            "id": str(row.id),
+            "username": row.username,
+            "email": row.email,
+            "full_name": row.full_name,
+            "role": row.role,
+            "filiere": row.filiere if hasattr(row, 'filiere') else None,
+            "plain_password": row.plain_password if hasattr(row, 'plain_password') else "Non disponible",
+            "created_at": row.created_at.isoformat() if row.created_at else None
+        })
+    
+    return users
+
+@app.delete("/delete-user/{username}")
+async def delete_user(username: str):
+    """Delete a user by username"""
+    session = get_cassandra_session()
+    
+    # Récupérer l'ID de l'utilisateur
+    result = session.execute(
+        "SELECT id FROM users WHERE username = %s ALLOW FILTERING",
+        (username,)
+    )
+    
+    row = result.one()
+    if not row:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user_id = row.id
+    
+    # Supprimer l'utilisateur en utilisant l'ID (clé primaire)
+    session.execute(
+        "DELETE FROM users WHERE id = %s",
+        (user_id,)
+    )
+    
+    return {"message": f"User {username} deleted successfully"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
@@ -62,6 +62,7 @@ def get_cassandra_session():
             title TEXT,
             description TEXT,
             teacher_username TEXT,
+            filiere TEXT,
             file_name TEXT,
             file_url TEXT,
             file_size BIGINT,
@@ -83,9 +84,10 @@ class Course(BaseModel):
     title: str
     description: str
     teacher_username: str
-    file_name: str
-    file_url: str
-    file_size: int
+    filiere: str
+    file_name: Optional[str] = None
+    file_url: Optional[str] = None
+    file_size: Optional[int] = 0
     created_at: datetime
     updated_at: datetime
 
@@ -122,8 +124,10 @@ async def root():
 async def create_course(
     title: str = Form(...),
     description: str = Form(...),
-    file: UploadFile = File(...),
-    authorization: str = Depends(lambda x: x)
+    filiere: str = Form(...),
+    teacher_username: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    authorization: str = Header(None)
 ):
     # Verify user is a teacher
     user = await get_current_user(authorization)
@@ -133,33 +137,39 @@ async def create_course(
             detail="Only teachers can create courses"
         )
     
-    # Ensure bucket exists
-    ensure_bucket()
+    file_url = None
+    file_name = None
+    file_size = 0
     
-    # Generate unique file name
-    file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
-    unique_filename = f"{uuid.uuid4()}.{file_extension}" if file_extension else str(uuid.uuid4())
-    
-    # Upload file to MinIO
-    try:
-        file_content = await file.read()
-        file_size = len(file_content)
+    # Upload file to MinIO only if provided
+    if file:
+        # Ensure bucket exists
+        ensure_bucket()
         
-        minio_client.put_object(
-            BUCKET_NAME,
-            unique_filename,
-            data=file_content,
-            length=file_size,
-            content_type=file.content_type or "application/octet-stream"
-        )
+        # Generate unique file name
+        file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+        unique_filename = f"{uuid.uuid4()}.{file_extension}" if file_extension else str(uuid.uuid4())
         
-        file_url = f"/api/download/courses/{unique_filename}"
-        
-    except S3Error as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error uploading file: {str(e)}"
-        )
+        try:
+            file_content = await file.read()
+            file_size = len(file_content)
+            
+            minio_client.put_object(
+                BUCKET_NAME,
+                unique_filename,
+                data=file_content,
+                length=file_size,
+                content_type=file.content_type or "application/octet-stream"
+            )
+            
+            file_url = f"/api/download/courses/{unique_filename}"
+            file_name = file.filename
+            
+        except S3Error as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error uploading file: {str(e)}"
+            )
     
     # Save metadata to Cassandra
     session = get_cassandra_session()
@@ -168,11 +178,11 @@ async def create_course(
     
     session.execute(
         """
-        INSERT INTO courses (id, title, description, teacher_username, file_name, 
+        INSERT INTO courses (id, title, description, teacher_username, filiere, file_name, 
                            file_url, file_size, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (course_id, title, description, user["username"], file.filename,
+        (course_id, title, description, teacher_username, filiere, file_name,
          file_url, file_size, created_at, created_at)
     )
     
@@ -180,8 +190,9 @@ async def create_course(
         id=course_id,
         title=title,
         description=description,
-        teacher_username=user["username"],
-        file_name=file.filename,
+        teacher_username=teacher_username,
+        filiere=filiere,
+        file_name=file_name,
         file_url=file_url,
         file_size=file_size,
         created_at=created_at,
@@ -189,7 +200,7 @@ async def create_course(
     )
 
 @app.get("/courses", response_model=List[Course])
-async def list_courses(authorization: str = Depends(lambda x: x)):
+async def list_courses(authorization: str = Header(None)):
     # Verify authentication
     user = await get_current_user(authorization)
     
@@ -212,6 +223,7 @@ async def list_courses(authorization: str = Depends(lambda x: x)):
             title=row.title,
             description=row.description,
             teacher_username=row.teacher_username,
+            filiere=row.filiere,
             file_name=row.file_name,
             file_url=row.file_url,
             file_size=row.file_size,
@@ -222,7 +234,7 @@ async def list_courses(authorization: str = Depends(lambda x: x)):
     return courses
 
 @app.get("/courses/{course_id}", response_model=Course)
-async def get_course(course_id: uuid.UUID, authorization: str = Depends(lambda x: x)):
+async def get_course(course_id: uuid.UUID, authorization: str = Header(None)):
     # Verify authentication
     user = await get_current_user(authorization)
     
@@ -240,6 +252,7 @@ async def get_course(course_id: uuid.UUID, authorization: str = Depends(lambda x
         title=row.title,
         description=row.description,
         teacher_username=row.teacher_username,
+        filiere=row.filiere,
         file_name=row.file_name,
         file_url=row.file_url,
         file_size=row.file_size,
@@ -248,7 +261,7 @@ async def get_course(course_id: uuid.UUID, authorization: str = Depends(lambda x
     )
 
 @app.delete("/courses/{course_id}")
-async def delete_course(course_id: uuid.UUID, authorization: str = Depends(lambda x: x)):
+async def delete_course(course_id: uuid.UUID, authorization: str = Header(None)):
     # Verify user is a teacher or admin
     user = await get_current_user(authorization)
     if user["role"] not in ["teacher", "admin"]:

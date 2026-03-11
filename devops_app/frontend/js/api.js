@@ -64,7 +64,9 @@ const Auth = {
     logout() {
         localStorage.removeItem(STORAGE_KEYS.TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
-        window.location.href = '/login/index.html';
+        localStorage.clear();
+        // Force redirect with replace to avoid back button issues
+        window.location.replace('/login/');
     },
 
     // Get authorization header

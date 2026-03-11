@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -34,6 +34,43 @@ def get_cassandra_session():
     )
     session = cluster.connect()
     session.set_keyspace("ent_db")
+    
+    # Create events table if not exists
+    session.execute("""
+        CREATE TABLE IF NOT EXISTS events (
+            id UUID PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            event_type TEXT,
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            teacher_username TEXT,
+            created_at TIMESTAMP
+        )
+    """)
+    
+    session.execute("""
+        CREATE INDEX IF NOT EXISTS ON events (teacher_username)
+    """)
+    
+    # Create assignments table if not exists
+    session.execute("""
+        CREATE TABLE IF NOT EXISTS assignments (
+            id UUID PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            deadline TIMESTAMP,
+            filiere TEXT,
+            teacher_username TEXT,
+            status TEXT,
+            created_at TIMESTAMP
+        )
+    """)
+    
+    session.execute("""
+        CREATE INDEX IF NOT EXISTS ON assignments (teacher_username)
+    """)
+    
     return session
 
 # Pydantic models
@@ -102,7 +139,7 @@ async def root():
     return {"message": "Admin Service is running", "version": "1.0.0"}
 
 @app.get("/stats", response_model=Stats)
-async def get_stats(authorization: str = Depends(lambda x: x)):
+async def get_stats(authorization: str = Header(None)):
     # Verify admin
     await get_current_user(authorization)
     
@@ -139,7 +176,7 @@ async def get_stats(authorization: str = Depends(lambda x: x)):
 @app.get("/users", response_model=List[User])
 async def list_users(
     role: Optional[str] = None,
-    authorization: str = Depends(lambda x: x)
+    authorization: str = Header(None)
 ):
     # Verify admin
     await get_current_user(authorization)
@@ -170,7 +207,7 @@ async def list_users(
 @app.post("/users", response_model=User)
 async def create_user(
     user: UserCreate,
-    authorization: str = Depends(lambda x: x)
+    authorization: str = Header(None)
 ):
     # Verify admin
     await get_current_user(authorization)
@@ -214,7 +251,7 @@ async def create_user(
 @app.get("/users/{user_id}", response_model=User)
 async def get_user(
     user_id: uuid.UUID,
-    authorization: str = Depends(lambda x: x)
+    authorization: str = Header(None)
 ):
     # Verify admin
     await get_current_user(authorization)
@@ -241,7 +278,7 @@ async def get_user(
 async def update_user(
     user_id: uuid.UUID,
     user_update: UserUpdate,
-    authorization: str = Depends(lambda x: x)
+    authorization: str = Header(None)
 ):
     # Verify admin
     await get_current_user(authorization)
@@ -297,10 +334,173 @@ async def update_user(
         created_at=row.created_at
     )
 
+# Event models
+class EventCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    event_type: str  # cours, examen, tp, td
+    start_date: datetime
+    end_date: datetime
+
+class Event(BaseModel):
+    id: str
+    title: str
+    description: Optional[str]
+    event_type: str
+    start_date: datetime
+    end_date: datetime
+    teacher_username: str
+    created_at: datetime
+
+# Event endpoints
+@app.post("/events", response_model=Event)
+async def create_event(event: EventCreate, username: str):
+    """Create a new calendar event"""
+    session = get_cassandra_session()
+    
+    event_id = uuid.uuid4()
+    now = datetime.utcnow()
+    
+    session.execute("""
+        INSERT INTO events (id, title, description, event_type, start_date, end_date, teacher_username, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (event_id, event.title, event.description, event.event_type, event.start_date, event.end_date, username, now))
+    
+    return Event(
+        id=str(event_id),
+        title=event.title,
+        description=event.description,
+        event_type=event.event_type,
+        start_date=event.start_date,
+        end_date=event.end_date,
+        teacher_username=username,
+        created_at=now
+    )
+
+@app.get("/events/{username}", response_model=List[Event])
+async def get_teacher_events(username: str):
+    """Get all events for a teacher"""
+    session = get_cassandra_session()
+    
+    rows = session.execute(
+        "SELECT * FROM events WHERE teacher_username = %s ALLOW FILTERING",
+        [username]
+    )
+    
+    events = []
+    for row in rows:
+        events.append(Event(
+            id=str(row.id),
+            title=row.title,
+            description=row.description,
+            event_type=row.event_type,
+            start_date=row.start_date,
+            end_date=row.end_date,
+            teacher_username=row.teacher_username,
+            created_at=row.created_at
+        ))
+    
+    return events
+
+@app.delete("/events/{event_id}")
+async def delete_event(event_id: str):
+    """Delete an event"""
+    session = get_cassandra_session()
+    
+    session.execute(
+        "DELETE FROM events WHERE id = %s",
+        [uuid.UUID(event_id)]
+    )
+    
+    return {"message": "Event deleted successfully"}
+
+# Assignment models
+class AssignmentCreate(BaseModel):
+    title: str
+    description: str
+    deadline: datetime
+    filiere: str
+    status: str = "active"
+
+class Assignment(BaseModel):
+    id: str
+    title: str
+    description: str
+    deadline: datetime
+    filiere: str
+    teacher_username: str
+    status: str
+    created_at: datetime
+
+@app.post("/assignments", response_model=Assignment)
+async def create_assignment(assignment: AssignmentCreate, username: str):
+    """Create a new assignment"""
+    session = get_cassandra_session()
+    
+    assignment_id = uuid.uuid4()
+    now = datetime.utcnow()
+    
+    session.execute(
+        """
+        INSERT INTO assignments (id, title, description, deadline, filiere, teacher_username, status, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (assignment_id, assignment.title, assignment.description, assignment.deadline,
+         assignment.filiere, username, assignment.status, now)
+    )
+    
+    return Assignment(
+        id=str(assignment_id),
+        title=assignment.title,
+        description=assignment.description,
+        deadline=assignment.deadline,
+        filiere=assignment.filiere,
+        teacher_username=username,
+        status=assignment.status,
+        created_at=now
+    )
+
+@app.get("/assignments/{username}", response_model=List[Assignment])
+async def get_teacher_assignments(username: str):
+    """Get all assignments for a teacher"""
+    session = get_cassandra_session()
+    
+    rows = session.execute(
+        "SELECT * FROM assignments WHERE teacher_username = %s ALLOW FILTERING",
+        [username]
+    )
+    
+    assignments = []
+    for row in rows:
+        assignments.append(Assignment(
+            id=str(row.id),
+            title=row.title,
+            description=row.description,
+            deadline=row.deadline,
+            filiere=row.filiere,
+            teacher_username=row.teacher_username,
+            status=row.status,
+            created_at=row.created_at
+        ))
+    
+    return assignments
+
+@app.delete("/assignments/{assignment_id}")
+async def delete_assignment(assignment_id: str):
+    """Delete an assignment"""
+    session = get_cassandra_session()
+    
+    session.execute(
+        "DELETE FROM assignments WHERE id = %s",
+        [uuid.UUID(assignment_id)]
+    )
+    
+    return {"message": "Assignment deleted successfully"}
+
 @app.delete("/users/{user_id}")
 async def delete_user(
     user_id: uuid.UUID,
-    authorization: str = Depends(lambda x: x)
+    authorization: str = Header(None)
 ):
     # Verify admin
     admin = await get_current_user(authorization)

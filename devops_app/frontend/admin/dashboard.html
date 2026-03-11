@@ -6,6 +6,7 @@
     <title>ENT EST · Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/api.js"></script>
+    <script src="../js/notifications.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
@@ -34,40 +35,77 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-xl text-white transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium mb-1">Total Étudiants</p>
+                        <h3 id="total-students" class="text-3xl font-bold">0</h3>
+                    </div>
+                    <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </div>
+                </div>
+            </div>
             
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-xl text-white transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium mb-1">Total Enseignants</p>
+                        <h3 id="total-teachers" class="text-3xl font-bold">0</h3>
+                    </div>
+                    <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-6 shadow-xl text-white transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-teal-100 text-sm font-medium mb-1">Total Utilisateurs</p>
+                        <h3 id="total-users" class="text-3xl font-bold">0</h3>
+                    </div>
+                    <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add User Form -->
+        <div class="max-w-2xl mx-auto mb-10">
             <div class="glass-card rounded-3xl p-8 shadow-xl">
                 <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
                     <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                     Ajouter un utilisateur
                 </h3>
-                <form class="space-y-4" onsubmit="event.preventDefault(); alert('Utilisateur ajouté !');">
+                <form id="add-user-form" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="text" placeholder="Nom" class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
-                        <input type="text" placeholder="Prénom" class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                        <input type="text" id="nom" placeholder="Nom" required class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                        <input type="text" id="prenom" placeholder="Prénom" required class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
                     </div>
-                    <input type="email" placeholder="Email @um5.ac.ma" class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
-                    <select class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                    <select id="role" class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" onchange="updateFiliereOptions()">
                         <option value="student">Étudiant</option>
                         <option value="teacher">Enseignant</option>
+                    </select>
+                    <select id="filiere" required class="w-full px-4 py-2.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="">Sélectionner une filière</option>
+                        <option value="Génie Informatique">Génie Informatique</option>
+                        <option value="Génie Civil">Génie Civil</option>
+                        <option value="Génie Mécanique">Génie Mécanique</option>
+                        <option value="Génie Électrique">Génie Électrique</option>
+                        <option value="Génie Industriel">Génie Industriel</option>
+                        <option value="Informatique">Informatique</option>
+                        <option value="Mathématiques">Mathématiques</option>
+                        <option value="Physique">Physique</option>
+                        <option value="Autre">Autre</option>
                     </select>
                     <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-lg transition transform active:scale-95">
                         Inscrire l'utilisateur
                     </button>
                 </form>
-            </div>
-
-            <div class="glass-card rounded-3xl p-8 shadow-xl border-dashed border-2 border-teal-200">
-                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Importation Groupée (Excel)
-                </h3>
-                <div class="flex flex-col items-center justify-center h-48 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50/50 hover:bg-teal-50 transition-colors cursor-pointer group">
-                    <svg class="w-12 h-12 text-gray-400 group-hover:text-teal-600 mb-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p class="text-sm text-gray-600">Glissez votre fichier <span class="font-bold text-teal-600">.xlsx</span> ici</p>
-                    <input type="file" class="hidden" accept=".xlsx, .xls">
-                </div>
-                <button class="mt-4 w-full text-teal-600 text-sm font-semibold hover:underline">Télécharger le template Excel (.xlsx)</button>
             </div>
         </div>
 
@@ -94,6 +132,7 @@
                             <th class="px-6 py-4">Utilisateur</th>
                             <th class="px-6 py-4">Email</th>
                             <th class="px-6 py-4" id="col-extra">Filière</th>
+                            <th class="px-6 py-4">Mot de passe</th>
                             <th class="px-6 py-4">Statut</th>
                             <th class="px-6 py-4 text-center">Actions</th>
                         </tr>
@@ -113,9 +152,11 @@
 
         const user = Auth.getUser();
         if (user.role !== 'admin') {
-            alert('Accès refusé. Vous devez être administrateur.');
-            Auth.logout();
-            window.location.href = '/login/index.html';
+            showToast('Accès refusé. Vous devez être administrateur.', 'error');
+            setTimeout(() => {
+                Auth.logout();
+                window.location.href = '/login/index.html';
+            }, 2000);
         }
 
         // Display admin name
@@ -123,14 +164,61 @@
             document.getElementById('admin-name').textContent = `Session: ${user.full_name || user.username}`;
         });
 
-        let students = [];
-        let teachers = [];
+        let allUsers = [];
         let currentTab = 'students';
 
-        // Lif (data.length === 0) {
+        // Charger tous les utilisateurs depuis l'API Auth
+        async function loadUsers() {
+            try {
+                // Récupérer tous les utilisateurs depuis Cassandra via une requête directe
+                const response = await fetch('http://localhost:8001/all-users');
+
+                if (response.ok) {
+                    allUsers = await response.json();
+                    updateStats();
+                    renderTable();
+                } else {
+                    console.error('Erreur lors du chargement des utilisateurs');
+                    // Fallback : essayer de charger depuis la base directement
+                    await loadUsersFromDB();
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                // Si l'API ne répond pas, on peut charger les données localement
+                await loadUsersFromDB();
+            }
+        }
+
+        // Fonction de secours pour charger depuis la DB
+        async function loadUsersFromDB() {
+            // Pour l'instant, on va simplement rafraîchir la page
+            // car nous n'avons pas d'endpoint direct
+            console.log('Tentative de chargement des utilisateurs...');
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            const students = allUsers.filter(u => u.role === 'student').length;
+            const teachers = allUsers.filter(u => u.role === 'teacher').length;
+            const total = allUsers.length;
+            
+            document.getElementById('total-students').textContent = students;
+            document.getElementById('total-teachers').textContent = teachers;
+            document.getElementById('total-users').textContent = total;
+        }
+
+        // Afficher le tableau selon l'onglet actif
+        function renderTable() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+
+            // Filtrer selon l'onglet
+            const data = allUsers.filter(u => u.role === currentTab.slice(0, -1)); // 'students' -> 'student'
+
+            if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                             Aucun ${currentTab === 'students' ? 'étudiant' : 'enseignant'} trouvé
                         </td>
                     </tr>
@@ -141,7 +229,8 @@
             data.forEach(user => {
                 const displayName = user.full_name || user.username;
                 const initial = displayName.charAt(0).toUpperCase();
-                const extraInfo = user.role === 'student' ? 'Génie Informatique' : 'Département';
+                const extraInfo = user.filiere || (user.role === 'student' ? 'Non spécifiée' : 'Non spécifié');
+                const passwordDisplay = (user.plain_password && user.plain_password !== 'null') ? user.plain_password : '••••••••';
                 
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition">
@@ -154,6 +243,18 @@
                         <td class="px-6 py-4 text-gray-600 text-sm">${user.email}</td>
                         <td class="px-6 py-4 text-gray-600 text-sm">${extraInfo}</td>
                         <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 rounded bg-gray-100 text-gray-700 text-xs font-mono">${passwordDisplay}</span>
+                                ${(user.plain_password && user.plain_password !== 'null') ? `
+                                    <button onclick="copyPassword('${user.plain_password}')" class="text-blue-600 hover:text-blue-800" title="Copier">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
                                 Actif
                             </span>
@@ -163,45 +264,7 @@
                                 <button onclick="editUser('${user.username}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </button>
-                                <button onclick="confirmDelete('${user.username}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function editUser(username) {
-            alert('Fonctionnalité de modification à venir pour: ' + username);
-        }
-
-        async function confirmDelete(username) {
-            if(!confirm(`Êtes-vous sûr de vouloir supprimer ${username} ?`)) {
-                return;
-            }
-            
-            try {
-                await AdminAPI.deleteUser(username);
-                alert("Utilisateur supprimé avec succès");
-                await loadUsers(); // Reload
-            } catch (error) {
-                alert("Erreur lors de la suppression: " + error.message);
-            }     <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
-        // Initial Load
-        loadUsers         <span class="px-3 py-1 rounded-full text-xs font-bold ${user.status === 'Actif' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
-                                ${user.status}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex justify-center gap-2">
-                                <button onclick="alert('Mise à jour de ' + '${user.name}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
-                                <button onclick="confirmDelete('${user.name}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                                <button onclick="confirmDeleteUser('${user.username}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
@@ -218,14 +281,241 @@
             renderTable();
         }
 
-        function confirmDelete(name) {
-            if(confirm(`Êtes-vous sûr de vouloir supprimer ${name} ?`)) {
-                alert("Utilisateur supprimé");
+        // Fonction pour mettre à jour les options de filière/département
+        function updateFiliereOptions() {
+            const role = document.getElementById('role').value;
+            const filiereSelect = document.getElementById('filiere');
+            
+            if (role === 'teacher') {
+                filiereSelect.innerHTML = `
+                    <option value="">Sélectionner un département</option>
+                    <option value="Département Informatique">Département Informatique</option>
+                    <option value="Département Génie Civil">Département Génie Civil</option>
+                    <option value="Département Génie Mécanique">Département Génie Mécanique</option>
+                    <option value="Département Génie Électrique">Département Génie Électrique</option>
+                    <option value="Département Mathématiques">Département Mathématiques</option>
+                    <option value="Département Physique">Département Physique</option>
+                    <option value="Administration">Administration</option>
+                `;
+            } else {
+                filiereSelect.innerHTML = `
+                    <option value="">Sélectionner une filière</option>
+                    <option value="Génie Informatique">Génie Informatique</option>
+                    <option value="Génie Civil">Génie Civil</option>
+                    <option value="Génie Mécanique">Génie Mécanique</option>
+                    <option value="Génie Électrique">Génie Électrique</option>
+                    <option value="Génie Industriel">Génie Industriel</option>
+                    <option value="Informatique">Informatique</option>
+                    <option value="Mathématiques">Mathématiques</option>
+                    <option value="Physique">Physique</option>
+                    <option value="Autre">Autre</option>
+                `;
             }
         }
 
-        // Initial Render
-        renderTable();
+        // Logout function
+        function logout() {
+            showConfirm('Voulez-vous vraiment vous déconnecter ?', () => {
+                Auth.logout();
+            });
+        }
+
+        // Fonction pour générer un mot de passe aléatoire
+        function generatePassword(length = 12) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%&*';
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+
+        // Fonction pour normaliser le texte (enlever les accents)
+        function normalizeText(text) {
+            return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+
+        // Gestion du formulaire d'ajout d'utilisateur
+        document.getElementById('add-user-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const prenom = document.getElementById('prenom').value.trim();
+            const nom = document.getElementById('nom').value.trim();
+            const filiere = document.getElementById('filiere').value;
+            const role = document.getElementById('role').value;
+            
+            if (!prenom || !nom || !filiere) {
+                showToast('Veuillez remplir tous les champs requis', 'warning');
+                return;
+            }
+
+            // Générer email et mot de passe
+            const prenomNormalized = normalizeText(prenom);
+            const nomNormalized = normalizeText(nom);
+            const username = `${prenomNormalized}_${nomNormalized}`;
+            const email = `${prenomNormalized}_${nomNormalized}@um5.ac.ma`;
+            const password = generatePassword();
+            const fullName = `${prenom} ${nom}`;
+
+            try {
+                const response = await fetch('http://localhost:8001/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password,
+                        full_name: fullName,
+                        role: role,
+                        filiere: filiere
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Afficher les informations de connexion dans un modal
+                    showCredentialsModal({
+                        fullName,
+                        email,
+                        username,
+                        password,
+                        role: role === 'student' ? 'Étudiant' : 'Enseignant',
+                        filiere
+                    });
+                    
+                    // Réinitialiser le formulaire
+                    document.getElementById('add-user-form').reset();
+                    updateFiliereOptions();
+                    
+                    // Recharger la liste des utilisateurs
+                    await loadUsers();
+                } else {
+                    if (data.detail && data.detail.includes('already registered')) {
+                        showToast('Cet utilisateur existe déjà', 'error');
+                    } else {
+                        showToast('Erreur: ' + (data.detail || 'Erreur inconnue'), 'error');
+                    }
+                }
+            } catch (error) {
+                showToast('Erreur de connexion au serveur', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Fonction pour copier le mot de passe
+        function copyPassword(password) {
+            navigator.clipboard.writeText(password).then(() => {
+                showToast('Mot de passe copié !', 'success');
+            }).catch(err => {
+                console.error('Erreur lors de la copie:', err);
+                showToast('Erreur lors de la copie', 'error');
+            });
+        }
+
+        // Fonction pour confirmer la suppression
+        function confirmDeleteUser(username) {
+            showConfirm(
+                `Êtes-vous sûr de vouloir supprimer l'utilisateur "${username}" ?<br><br><span class="text-red-600 font-semibold">Cette action est irréversible !</span>`,
+                () => deleteUser(username),
+                'Supprimer',
+                'danger'
+            );
+        }
+
+        // Fonction pour supprimer un utilisateur
+        async function deleteUser(username) {
+            try {
+                const response = await fetch(`http://localhost:8001/delete-user/${username}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Utilisateur supprimé avec succès !', 'success');
+                    await loadUsers(); // Recharger la liste
+                } else {
+                    const error = await response.json();
+                    showToast('Erreur: ' + (error.detail || 'Erreur inconnue'), 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showToast('Erreur lors de la suppression', 'error');
+            }
+        }
+
+        // Fonction pour éditer un utilisateur (placeholder)
+        function editUser(username) {
+            showToast('Fonctionnalité d\'édition à venir pour: ' + username, 'info');
+        }
+
+        // Modal pour afficher les credentials
+        function showCredentialsModal(credentials) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            
+            overlay.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">Utilisateur créé avec succès !</h3>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-4 mb-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 font-medium">👤 Nom complet</span>
+                            <span class="text-sm font-semibold text-gray-800">${credentials.fullName}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 font-medium">📧 Email</span>
+                            <span class="text-sm font-mono text-gray-800">${credentials.email}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 font-medium">🔑 Nom d'utilisateur</span>
+                            <span class="text-sm font-mono text-gray-800">${credentials.username}</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-yellow-100 -mx-4 px-4 py-2 border-l-4 border-yellow-500">
+                            <span class="text-sm text-gray-700 font-bold">🔐 Mot de passe</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-mono font-bold text-gray-900">${credentials.password}</span>
+                                <button onclick="copyPassword('${credentials.password}')" class="p-1 text-yellow-700 hover:bg-yellow-200 rounded">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 font-medium">👔 Rôle</span>
+                            <span class="text-sm font-semibold text-gray-800">${credentials.role}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 font-medium">🎓 ${credentials.role === 'Étudiant' ? 'Filière' : 'Département'}</span>
+                            <span class="text-sm font-semibold text-gray-800">${credentials.filiere}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                        <p class="text-xs text-amber-800">⚠️ <strong>Important :</strong> Notez bien ces informations, elles ne seront plus affichées !</p>
+                    </div>
+                    
+                    <div class="flex gap-3 justify-end">
+                        <button onclick="this.closest('.modal-overlay').remove()" 
+                                class="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition">
+                            J'ai noté les informations
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }
+
+        // Charger les utilisateurs au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+        });
     </script>
 </body>
 </html>
