@@ -51,7 +51,7 @@ services:
     networks:
       - ent-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -145,9 +145,12 @@ services:
       - MODEL_NAME=llama3
       - AUTH_SERVICE_URL=http://auth-service:8001
     depends_on:
-      - cassandra
-      - ollama
-      - auth-service
+      cassandra:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     networks:
       - ent-network
     restart: unless-stopped

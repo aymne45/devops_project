@@ -168,26 +168,17 @@
         let currentTab = 'students';
 
         // Charger tous les utilisateurs depuis l'API Auth
-        async function loadUsers() {
-            try {
-                // Récupérer tous les utilisateurs depuis Cassandra via une requête directe
-                const response = await fetch('http://localhost:8001/all-users');
+async function loadUsers() {
+    try {
+        allUsers = await AdminAPI.getUsers();
 
-                if (response.ok) {
-                    allUsers = await response.json();
-                    updateStats();
-                    renderTable();
-                } else {
-                    console.error('Erreur lors du chargement des utilisateurs');
-                    // Fallback : essayer de charger depuis la base directement
-                    await loadUsersFromDB();
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
-                // Si l'API ne répond pas, on peut charger les données localement
-                await loadUsersFromDB();
-            }
-        }
+        updateStats();
+        renderTable();
+    } catch (error) {
+        console.error('Erreur chargement utilisateurs:', error);
+        showToast('Erreur lors du chargement des utilisateurs', 'error');
+    }
+}
 
         // Fonction de secours pour charger depuis la DB
         async function loadUsersFromDB() {
@@ -358,20 +349,14 @@
             const fullName = `${prenom} ${nom}`;
 
             try {
-                const response = await fetch('http://localhost:8001/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
+                const response = await AdminAPI.createUser({
                         username: username,
                         email: email,
                         password: password,
                         full_name: fullName,
                         role: role,
                         filiere: filiere
-                    })
-                });
+                    });
 
                 const data = await response.json();
 
@@ -428,9 +413,7 @@
         // Fonction pour supprimer un utilisateur
         async function deleteUser(username) {
             try {
-                const response = await fetch(`http://localhost:8001/delete-user/${username}`, {
-                    method: 'DELETE'
-                });
+                const response = await AdminAPI.deleteUser(username);
 
                 if (response.ok) {
                     showToast('Utilisateur supprimé avec succès !', 'success');
